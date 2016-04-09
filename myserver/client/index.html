@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="libs/jquery.min.js"></script>
+    <script src="libs/underscore.js"></script>
+    <script src="http://localhost:3000/validator.js"></script>
+</head>
+
+<body>
+    <div>
+        <span>name</span><input id="name"></input>
+    </div>
+    <div>
+        <span>unitSystem</span><input id="unitSystem"></input>
+        <button onclick="createProject()">create project</button>
+    </div>
+    
+    <div>
+        <span>username</span><input id="user"></input>
+        <button onclick="listen()">listen events</button>
+    </div>
+    
+    <div id="output">
+    </div>
+    
+  
+</body>
+
+<script>
+    var serverAddress ="http://localhost:3000";
+    var watchEvents;
+    function createProject(){
+        var project =  {
+                    name:$('#name').val(),
+                    unitsystem:$('#unitSystem').val()
+                };
+        var result = projectValidator.validate(project);
+        if(result.length>0){
+            eventLog('validation failed',result);
+        }else{
+        $.ajax({
+                type: "POST",
+                url: serverAddress + "/projects?user="+$('#user').val(),
+                dataType: "json",
+                data: project,
+                cache: false,
+                crossDomain: true
+            }).done(function (responseData) {
+                eventLog('POST',responseData);
+            });
+        }
+    }
+    
+    function listen(){
+        if(watchEvents){
+            watchEvents.close();
+        }
+        watchEvents = new EventSource(serverAddress+"/projects/events?user="+$('#user').val());
+		watchEvents.addEventListener('open', function(event) {
+            eventLog('EventsWatch EventSource open');
+		});
+		watchEvents.addEventListener('error', function(event) {
+            eventLog('EventSource error');
+		});
+        watchEvents.addEventListener('update', function(event) {
+            eventLog('SSE',event.data);
+		});
+    }
+    
+    function eventLog(event,data){
+        var display;
+        if(data){
+            display = $('#output').html()+'<br>'+event+' '+JSON.stringify(data);
+            console.log(event,data);
+        }else{
+            display =$('#output').html()+'<br>'+event;
+            console.log(event);
+        }
+        if((display.match(/<br>/g) || []).length>20){
+            display = display.substring(display.indexOf('<br>')+19,display.length);
+        }
+        $('#output').html(display);
+    }
+</script>
+
+</html>

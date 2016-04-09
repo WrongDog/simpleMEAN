@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Taiji Notification</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="libs/jquery.min.js"></script>
+    <script src="libs/underscore.js"></script>
+    <script src="cordova.js"></script>
+</head>
+
+<body>
+    <div id="body">
+        <input id="textbox_address" style="width:100%" placeholder="Server Address" type="text" value="http://192.168.0.42:3000/projects/events?user=user">
+        <div>
+            <button onclick="scanCode()">scanCode</button>
+            <button onclick="connect()">connect</button>
+        </div>
+        <div id="output"></div>
+    </div>
+</body>
+
+<script>
+    document.addEventListener('deviceready', onDeviceReady, false);
+    function onDeviceReady(){
+        eventLog('device:',device);
+        eventLog('cordova plugins:',_.keys(cordova.plugins));
+        cordova.plugins.backgroundMode.setDefaults({ text:'you can still recieve notifications'});
+        cordova.plugins.backgroundMode.enable();    
+        getStorageValue('#textbox_address');
+    };
+    function getStorageValue(key){
+        NativeStorage.getString(key,function(value){
+            if(value){
+                $(key).val(value);
+            }         
+        },function(e){
+            eventLog('NativeStorage failed to get '+key,e);
+        });
+    }
+    function saveStorageValue(key){
+        var value = $(key).val();
+        NativeStorage.putString(key,value,function(value){
+        },function(e){
+            eventLog('NativeStorage failed to save '+key,e);
+        });
+        return value;
+    }
+    var watchEvents;
+    function connect(){
+        var serverAddress = saveStorageValue('#textbox_address');
+        
+        if(watchEvents){
+            watchEvents.close();
+        }
+        watchEvents = new EventSource(serverAddress);
+		watchEvents.addEventListener('open', function(event) {
+            eventLog('EventsWatch EventSource open');
+		});
+		watchEvents.addEventListener('error', function(event) {
+            eventLog('EventSource error');
+		});
+        watchEvents.addEventListener('update', function(event) {
+            eventLog('SSE',event.data);
+		});
+    }
+    
+    function scanCode(){
+        cordova.plugins.barcodeScanner.scan(
+            function (result) {
+                $('#textbox_address').val(trim(result.text));
+                eventLog("We got a barcode" , result);
+            }, 
+            function (error) {
+                eventLog("Scanning failed: " + error);
+            }
+        );
+
+    }
+    function trim(str){ 
+ 　　   return str.replace(/(^\s*)|(\s*$)/g, "");
+ 　　}
+
+   
+
+    function eventLog(event,data){
+        var display;
+        if(data){
+            display = $('#output').html()+'<br>'+event+' ';
+            try{
+                display +=JSON.stringify(data);
+            }catch(error){
+                display +=error;
+            }        
+            console.log(event,data);
+        }else{
+            display =$('#output').html()+'<br>'+event;
+            console.log(event);
+        }
+        if((display.match(/<br>/g) || []).length>10){
+            display = display.substring(display.indexOf('<br>')+9,display.length);
+        }
+        $('#output').html(display);
+    }
+</script>
+
+</html>

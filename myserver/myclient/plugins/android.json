@@ -1,0 +1,27 @@
+{
+    "prepare_queue": {
+        "installed": [],
+        "uninstalled": []
+    },
+    "config_munge": {
+        "files": {}
+    },
+    "installed_plugins": {
+        "cordova-plugin-whitelist": {
+            "PACKAGE_NAME": "io.cordova.hellocordova"
+        },
+        "cordova-plugin-device": {
+            "PACKAGE_NAME": "io.cordova.hellocordova"
+        },
+        "cordova-plugin-background-mode": {
+            "PACKAGE_NAME": "io.cordova.cordovaeventsource"
+        },
+        "cordova-plugin-nativestorage": {
+            "PACKAGE_NAME": "io.cordova.cordovaeventsource"
+        },
+        "phonegap-plugin-barcodescanner": {
+            "PACKAGE_NAME": "io.cordova.cordovaeventsource"
+        }
+    },
+    "dependent_plugins": {}
+}
